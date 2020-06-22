@@ -10,13 +10,13 @@ int main(int argc, const char** argv)
     Args args;
     Processor processor;
 
-    args.parse(argc, argv);
+    status = args.parse(argc, argv);
 
     const std::vector<std::string>& src_list = args.get_src_list();
     for(int i = 0; status && (i < src_list.size()); i++)
     {
         const char* path = src_list[i].c_str();
-        
+
         OS::FileInfo info = {};
         status = OS::GetFileInfo(path, info);
 
