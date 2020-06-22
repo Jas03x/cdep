@@ -9,7 +9,9 @@ LINK = "/mnt/c/$(MSVC)/bin/Hostx64/x64/link.exe"
 
 WIN_DBG = "/mnt/c/Program Files (x86)/Windows Kits/10/Debuggers/x64/windbg.exe"
 
-INC_PATH  = -I "$(WIN_SDK_INC)/ucrt"
+INC_PATH  = -I "$(WIN_SDK_INC)/um"
+INC_PATH += -I "$(WIN_SDK_INC)/shared"
+INC_PATH += -I "$(WIN_SDK_INC)/ucrt"
 INC_PATH += -I "C:/$(MSVC)/include"
 
 LIB_PATH  = -LIBPATH:"C:/$(MSVC)/lib/x64"
