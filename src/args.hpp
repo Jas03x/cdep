@@ -24,7 +24,13 @@ private:
     bool parse_src_path(const char* path);
 
 public:
+    Args();
+    ~Args();
+
+    static Args* GetInstance();
+
     bool parse(int argc, const char** argv);
+  
     const std::vector<std::string>& get_inc_list() const;
     const std::vector<std::string>& get_src_list() const;
 };

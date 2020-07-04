@@ -2,6 +2,31 @@
 
 #include <ascii.hpp>
 
+Args* Instance = nullptr;
+
+Args::Args()
+{
+    if(Instance == nullptr) {
+        Instance = this;
+    } else {
+        printf("error: args structure already exists\n");
+    }
+}
+
+Args::~Args()
+{
+    Instance = nullptr;
+}
+
+Args* Args::GetInstance()
+{
+    if(Instance == nullptr)
+    {
+        printf("error: args structure not allocated\n");
+    }
+    return Instance;
+}
+
 bool Args::parse(int argc, const char** argv)
 {
     bool status = true;
@@ -114,3 +139,4 @@ bool Args::parse_src_path(const char* path)
 
 const std::vector<std::string>& Args::get_inc_list() const { return m_inc_list; }
 const std::vector<std::string>& Args::get_src_list() const { return m_src_list; }
+

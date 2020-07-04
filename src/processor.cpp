@@ -6,7 +6,13 @@
 
 Processor::Processor()
 {
-    m_buffer.reserve(256); 
+    m_buffer.reserve(MAX_PATH_LEN);
+    m_path_buffer = new char[MAX_PATH_LEN];
+}
+
+Processor::~Processor()
+{
+    delete[] m_path_buffer;
 }
 
 std::pair<bool, uint64_t> Processor::process_include(const char* path)
@@ -17,8 +23,8 @@ std::pair<bool, uint64_t> Processor::process_include(const char* path)
     OS::FileInfo f_info = {};
     if((status = OS::GetFileInfo(path, f_info)))
     {
-        std::map<uint64_t, OS::FileInfo>::const_iterator it = m_fcache.find(f_info.ID);
-        if(it == m_fcache.end())
+        std::map<uint64_t, OS::FileInfo>::const_iterator it = m_cache.find(f_info.ID);
+        if(it == m_cache.end())
         {
             std::pair<bool, uint64_t> rval = process_file(path);
             if(rval.first)
@@ -26,7 +32,7 @@ std::pair<bool, uint64_t> Processor::process_include(const char* path)
                 write_time = std::max(f_info.write_time, rval.second);
                 
                 f_info.write_time = write_time;
-                m_fcache[f_info.ID] = f_info;
+                m_cache[f_info.ID] = f_info;
             }
             else
             {
@@ -70,15 +76,26 @@ std::pair<bool, uint64_t> Processor::process_file(const char* path)
             {
                 if((status = file.read_include(m_buffer)))
                 {
-                    std::pair<bool, uint64_t> rval = process_include(path);
-                    if(rval.first)
+                    if(m_buffer.size() >= MAX_PATH_LEN)
                     {
-                        write_time = std::max(write_time, rval.second);
+                        status = false;
+                        printf("error: include path exceeds size limit\n");
+                    }
+                    else
+                    {
+                        m_path_buffer[0] = 0;
+                        strncat(m_path_buffer, m_string_buffer.size(), m_path_buffer.size());
+
+                        std::pair<bool, uint64_t> rval = process_include(m_path_buffer);
+                        if(rval.first)
+                        {
+                            write_time = std::max(write_time, rval.second);
+                        }
                     }
                 }
                 else
                 {
-                    printf("bad include file name\n");
+                    printf("bad include\n");
                     break;
                 }
             }

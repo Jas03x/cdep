@@ -10,14 +10,19 @@
 class Processor
 {
 private:
-    std::vector<char> m_buffer;
-    std::map<uint64_t, OS::FileInfo> m_fcache;
+    char* m_path_buffer;
+    std::vector<char> m_string_buffer;
+    std::map<uint64_t, OS::FileInfo> m_cache;
 
 private:
     std::pair<bool, uint64_t> process_include(const char* path);
 
 public:
-    Processor() { m_buffer.reserve(256); }
+    enum { MAX_PATH_LEN = 2048 };
+
+public:
+    Processor();
+    ~Processor();
     
     std::pair<bool, uint64_t> process_file(const char* path);
 };

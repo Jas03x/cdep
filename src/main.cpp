@@ -7,6 +7,7 @@
 int main(int argc, const char** argv)
 {
     bool status = true;
+
     Args args;
     Processor processor;
 
@@ -33,7 +34,7 @@ int main(int argc, const char** argv)
                 if(rval.second > info.write_time)
                 {
                     info.write_time = rval.second;
-                    OS::UpdateFileInfo(path, info);
+                    OS::SetFileInfo(path, info);
                 }
             }
             else
@@ -45,3 +46,4 @@ int main(int argc, const char** argv)
 
     return status ? 0 : -1;
 }
+

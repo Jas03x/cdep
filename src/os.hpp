@@ -15,7 +15,7 @@ namespace OS
     };
 
     bool GetFileInfo(const char* path, FileInfo& info);
-    bool UpdateFileInfo(const char* path, const FileInfo& params);
+    bool SetFileInfo(const char* path, const FileInfo& info);
 }
 
 #endif // OS_HPP

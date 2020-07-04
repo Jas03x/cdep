@@ -28,36 +28,38 @@ bool GetFileHandle(const char* path, HANDLE* handle)
 
 bool OS::GetFileInfo(const char* path, FileInfo& info)
 {
-    HANDLE handle;
-    bool status = GetFileHandle(path, &handle);
+    bool status = true;
 
-    BY_HANDLE_FILE_INFORMATION f_info = {};
-    if(status)
+    WIN32_FILE_ATTRIBUTE_DATA data = {};
+    BOOL ret = GetFileAttributesEx(path, &data);
+    if(ret == TRUE)
     {
-        info.exists = true;
-        if(GetFileInformationByHandle(handle, &f_info) == 0)
+        DWORD attr = data.dwFileAttributes;
+        if((attr == INVALID_FILE_ATTRIBUTES) || (attr & FILE_ATTRIBUTE_DIRECTORY != 0x0))
         {
+            info.exists = false;
             status = false;
             printf("error: could not scan file \"%s\"\n", path);
         }
         else
         {
+            info.exists = true;
             info.ID = make_uint64(f_info.nFileIndexLow, f_info.nFileIndexHigh);
-            info.create_time = make_uint64(f_info.ftCreationTime.dwLowDateTime,   f_info.ftCreationTime.dwHighDateTime);
-            info.access_time = make_uint64(f_info.ftLastAccessTime.dwLowDateTime, f_info.ftLastAccessTime.dwHighDateTime);
-            info.write_time  = make_uint64(f_info.ftLastWriteTime.dwLowDateTime,  f_info.ftLastWriteTime.dwHighDateTime);
+            info.create_time = make_uint64(data.ftCreationTime.dwLowDateTime,   data.ftCreationTime.dwHighDateTime);
+            info.access_time = make_uint64(data.ftLastAccessTime.dwLowDateTime, data.ftLastAccessTime.dwHighDateTime);
+            info.write_time  = make_uint64(data.ftLastWriteTime.dwLowDateTime,  data.ftLastWriteTime.dwHighDateTime);
         }
-        CloseHandle(handle);
     }
     else
     {
-        info.exists = false;
+        status = false;
+        printf("error: could not read attributes of file \"%s\"\n", path);
     }
 
     return status;
 }
 
-bool OS::UpdateFileInfo(const char* path, const FileInfo& params)
+bool OS::SetFileInfo(const char* path, const FileInfo& info)
 {
     HANDLE handle;
     bool status = GetFileHandle(path, &handle);
@@ -70,14 +72,14 @@ bool OS::UpdateFileInfo(const char* path, const FileInfo& params)
 
     if(status)
     {
-        FILE_BASIC_INFO info;
-        info.CreationTime.QuadPart = params.create_time;
-        info.LastAccessTime.QuadPart = params.access_time;
-        info.LastWriteTime.QuadPart = params.write_time;
-        info.ChangeTime.QuadPart = params.write_time;
-        info.FileAttributes = 0;
+        FILE_BASIC_INFO file_info = {};
+        file_info.CreationTime.QuadPart = info.create_time;
+        file_info.LastAccessTime.QuadPart = info.access_time;
+        file_info.LastWriteTime.QuadPart = info.write_time;
+        file_info.ChangeTime.QuadPart = info.write_time;
+        file_info.FileAttributes = 0;
 
-        if(SetFileInformationByHandle(handle, FileBasicInfo, &info, sizeof(FILE_BASIC_INFO)) == 0)
+        if(SetFileInformationByHandle(handle, FileBasicInfo, &file_info, sizeof(FILE_BASIC_INFO)) == 0)
         {
             status = false;
             printf("error: failed to update information for file \"%s\"\n", path);
@@ -86,3 +88,4 @@ bool OS::UpdateFileInfo(const char* path, const FileInfo& params)
 
     return status;
 }
+
