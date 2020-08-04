@@ -2,7 +2,7 @@
 
 #include "ascii.hpp"
 
-Args* Instance = nullptr;
+static Args* Instance = nullptr;
 
 Args::Args()
 {
