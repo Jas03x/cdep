@@ -1,6 +1,6 @@
 #include "args.hpp"
 
-#include <ascii.hpp>
+#include "ascii.hpp"
 
 Args* Instance = nullptr;
 
@@ -32,67 +32,29 @@ bool Args::parse(int argc, const char** argv)
     bool status = true;
     for(unsigned int i = 1; status && (i < argc); i++)
     {
-        const char* arg = argv[i];
-        const char* val = nullptr;
-        TYPE type = parse_arg(argv[i], &val);
-        if(type == TYPE::INVALID)
+        if(argv[i][0] == '-')
         {
-            status = false;
-        }
-        else
-        {
-            switch(type)
+            switch(argv[i][1])
             {
-                case TYPE::INCLUDE:
+                case 'I':
                 {
-                    if(val == nullptr)
-                    {
-                        val = argv[++i];
-                    }
-                    status = parse_inc_path(val);
-                    break;
-                }
-                case TYPE::NONE:
-                {
-                    status = parse_src_path(arg);
+                    status = parse_inc_path(argv[i][2] != 0 ? &argv[i][2] : argv[++i]);
                     break;
                 }
                 default:
                 {
+                    status = false;
+                    printf("invalid switch\n");
                     break;
                 }
             }
         }
-    }
-    return status;
-}
-
-Args::TYPE Args::parse_arg(const char* arg, const char** val)
-{
-    TYPE type = TYPE::INVALID;
-    if(arg[0] == '-')
-    {
-        switch(arg[1])
+        else
         {
-            case 'I':
-            {
-                type = TYPE::INCLUDE;
-                *val = (arg[2] == 0) ? nullptr : &arg[2];
-                break;
-            }
-            default:
-            {
-                type = TYPE::INVALID;
-                printf("invalid switch '%c'\n", arg[1]);
-                break;
-            }
+            status = parse_src_path(argv[i]);
         }
     }
-    else
-    {
-        type = TYPE::NONE;
-    }
-    return type;
+    return status;
 }
 
 bool Args::path_valid(const char* path)
