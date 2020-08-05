@@ -2,17 +2,18 @@
 
 #include <algorithm>
 
-#include "file.hpp"
+#include "ascii.hpp"
+
+enum { INITIAL_STRING_BUFFER_SIZE = 1024 };
 
 Processor::Processor()
 {
-    m_buffer.reserve(MAX_PATH_LEN);
-    m_path_buffer = new char[MAX_PATH_LEN];
+    m_path_buffer.reserve(INITIAL_STRING_BUFFER_SIZE);
+    m_string_buffer.reserve(INITIAL_STRING_BUFFER_SIZE);
 }
 
 Processor::~Processor()
 {
-    delete[] m_path_buffer;
 }
 
 std::pair<bool, uint64_t> Processor::process_include(const char* path)
@@ -49,6 +50,62 @@ std::pair<bool, uint64_t> Processor::process_include(const char* path)
     return std::make_pair(status, write_time);
 }
 
+bool Processor::read_token(File& file)
+{
+    m_string_buffer.clear();
+    while(true)
+    {
+        char c = file.getc();
+        if(is_text(c))
+        {
+            m_string_buffer.push_back(c);
+        }
+        else
+        {
+            if(c != EOF)
+            {
+                file.ungetc(c);
+            }
+            break;
+        }
+    }
+    return true;
+}
+
+bool Processor::read_include(File& file)
+{
+    file.skip_space();
+    m_string_buffer.clear();
+
+    bool status = true;
+    char s = file.getc();
+    if((s != '"') && (s != '<'))
+    {
+        status = false;
+    }
+
+    while(status)
+    {
+        char c = file.getc();
+        if(is_path(c))
+        {
+            m_string_buffer.push_back(c);
+        }
+        else
+        {
+            if(((s == '"') && (c == '"')) || ((s == '<') && (c == '>')))
+            {
+                break;
+            }
+            else
+            {
+                status = false;
+            }
+        }
+    }
+    return status;
+}
+
 std::pair<bool, uint64_t> Processor::process_file(const char* path)
 {
     bool status = true;
@@ -70,27 +127,19 @@ std::pair<bool, uint64_t> Processor::process_file(const char* path)
         }
         else if(file.getc() == '#')
         {
-            file.read_token(m_buffer);
-            const char* str = m_buffer.data();
+            read_token(file);
+            const char* str = m_string_buffer.data();
             if(strcmp(str, "include") == 0)
             {
-                if((status = file.read_include(m_buffer)))
+                if((status = read_include(file)))
                 {
-                    if(m_buffer.size() >= MAX_PATH_LEN)
-                    {
-                        status = false;
-                        printf("error: include path exceeds size limit\n");
-                    }
-                    else
-                    {
-                        m_path_buffer[0] = 0;
-                        strncat(m_path_buffer, m_string_buffer.size(), m_path_buffer.size());
+                    m_path_buffer[0] = 0;
+                    strncat(m_path_buffer, m_string_buffer.data(), m_path_buffer.size());
 
-                        std::pair<bool, uint64_t> rval = process_include(m_path_buffer);
-                        if(rval.first)
-                        {
-                            write_time = std::max(write_time, rval.second);
-                        }
+                    std::pair<bool, uint64_t> rval = process_include(m_path_buffer);
+                    if(rval.first)
+                    {
+                        write_time = std::max(write_time, rval.second);
                     }
                 }
                 else

@@ -6,19 +6,20 @@
 #include <vector>
 
 #include "os.hpp"
+#include "file.hpp"
 
 class Processor
 {
 private:
-    char* m_path_buffer;
+    std::vector<char> m_path_buffer;
     std::vector<char> m_string_buffer;
     std::map<uint64_t, OS::FileInfo> m_cache;
 
 private:
-    std::pair<bool, uint64_t> process_include(const char* path);
+    bool read_token(File& file);
+    bool read_include(File& file);
 
-public:
-    enum { MAX_PATH_LEN = 2048 };
+    std::pair<bool, uint64_t> process_include(const char* path);
 
 public:
     Processor();

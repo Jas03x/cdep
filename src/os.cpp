@@ -29,31 +29,31 @@ bool GetFileHandle(const char* path, HANDLE* handle)
 bool OS::GetFileInfo(const char* path, FileInfo& info)
 {
     bool status = true;
+    HANDLE handle = nullptr;
+    BY_HANDLE_FILE_INFORMATION data = {};
 
-    WIN32_FILE_ATTRIBUTE_DATA data = {};
-    BOOL ret = GetFileAttributesEx(path, &data);
-    if(ret == TRUE)
+    if(status)
     {
-        DWORD attr = data.dwFileAttributes;
-        if((attr == INVALID_FILE_ATTRIBUTES) || (attr & FILE_ATTRIBUTE_DIRECTORY != 0x0))
-        {
-            info.exists = false;
-            status = false;
-            printf("error: could not scan file \"%s\"\n", path);
-        }
-        else
-        {
-            info.exists = true;
-            info.ID = make_uint64(f_info.nFileIndexLow, f_info.nFileIndexHigh);
-            info.create_time = make_uint64(data.ftCreationTime.dwLowDateTime,   data.ftCreationTime.dwHighDateTime);
-            info.access_time = make_uint64(data.ftLastAccessTime.dwLowDateTime, data.ftLastAccessTime.dwHighDateTime);
-            info.write_time  = make_uint64(data.ftLastWriteTime.dwLowDateTime,  data.ftLastWriteTime.dwHighDateTime);
-        }
+        status = GetFileHandle(path, &handle);
     }
-    else
+
+    if(status)
     {
-        status = false;
-        printf("error: could not read attributes of file \"%s\"\n", path);
+        status = (GetFileInformationByHandle(handle, &data) == TRUE);
+    }
+
+    if(status)
+    {
+        info.exists = true;
+        info.ID = make_uint64(data.nFileIndexLow, data.nFileIndexHigh);
+        info.create_time = make_uint64(data.ftCreationTime.dwLowDateTime,   data.ftCreationTime.dwHighDateTime);
+        info.access_time = make_uint64(data.ftLastAccessTime.dwLowDateTime, data.ftLastAccessTime.dwHighDateTime);
+        info.write_time  = make_uint64(data.ftLastWriteTime.dwLowDateTime,  data.ftLastWriteTime.dwHighDateTime);
+    }
+
+    if(handle != nullptr)
+    {
+        CloseHandle(handle);
     }
 
     return status;
@@ -66,7 +66,6 @@ bool OS::SetFileInfo(const char* path, const FileInfo& info)
     
     if(!status)
     {
-        status = false;
         printf("could not open file \"%s\" to update timestamp\n", path);
     }
 
@@ -84,6 +83,11 @@ bool OS::SetFileInfo(const char* path, const FileInfo& info)
             status = false;
             printf("error: failed to update information for file \"%s\"\n", path);
         }
+    }
+
+    if(handle != nullptr)
+    {
+        CloseHandle(handle);
     }
 
     return status;
