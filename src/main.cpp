@@ -1,49 +1,85 @@
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "args.hpp"
-#include "processor.hpp"
+#include "ascii.hpp"
+#include "parser.hpp"
 
-int main(int argc, const char** argv)
+bool parse_path(const char* path)
 {
     bool status = true;
-
-    Args args;
-    Processor processor;
-
-    status = args.parse(argc, argv);
-
-    const std::vector<std::string>& src_list = args.get_src_list();
-    for(int i = 0; status && (i < src_list.size()); i++)
+    for(const char* it = path; *it != 0; it++)
     {
-        const char* path = src_list[i].c_str();
-
-        OS::FileInfo info = {};
-        status = OS::GetFileInfo(path, info);
-
-        if(!status)
+        if(!is_path(*it))
         {
-            printf("error: could not process source file \"%s\"\n", path);
+            status = false;
+            break;
         }
+    }
+    return true;
+}
 
-        if(status)
+bool parse_args(int argc, char** argv, Args& args)
+{
+    enum : uint32_t
+    {
+        scan_error  = 0,
+        scan_option = 1,
+        scan_inc    = 2
+    } state = scan_option;
+
+    for(unsigned int i = 0; (i < argc) && (state != scan_error); i++)
+    {
+        switch(state)
         {
-            std::pair<bool, uint64_t> rval = processor.process_file(path);
-            if(rval.first)
+            case scan_option:
             {
-                if(rval.second > info.write_time)
+                if((argv[i][0] == '-') && (argv[i][2] == '\0'))
                 {
-                    info.write_time = rval.second;
-                    OS::SetFileInfo(path, info);
+                    if(argv[i][1] == 'I')
+                    {
+                        state = scan_inc;
+                    }
+                    else
+                    {
+                        printf("error: unknown switch '%c'\n", argv[i][1]);
+                    }
                 }
+                else
+                {
+                    state = parse_path(argv[i]) ? scan_option : scan_error;
+                    if(state != scan_error)
+                    {
+                        args.src_list.push_back(std::string(argv[i]));
+                    }
+                }
+                break;
             }
-            else
+            
+            case scan_inc:
             {
-                status = false;
+                state = parse_path(argv[i]) ? scan_option : scan_error;
+                if(state != scan_error)
+                {
+                    args.inc_list.push_back(std::string(argv[i]));
+                }
+                break;
             }
         }
     }
 
-    return status ? 0 : -1;
+    return state;
 }
 
+int main(int argc, char** argv)
+{
+    Args args;
+    bool status = parse_args(argc, argv, args);
+
+    for(unsigned int i = 0; status && (i < args.src_list.size()); i++)
+    {
+        status = Parser::Process(args.src_list[i].c_str(), args);
+    }
+
+    return status ? 0 : -1;
+}

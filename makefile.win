@@ -1,8 +1,9 @@
 
-MSVC = Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.26.28801
+MSVC = Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.27.29110
+WIN_SDK = C:/Program Files (x86)/Windows Kits/10
 
-WIN_SDK_INC = C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0
-WIN_SDK_LIB = C:/Program Files (x86)/Windows Kits/10/Lib/10.0.18362.0
+WIN_SDK_INC = $(WIN_SDK)/Include/10.0.18362.0
+WIN_SDK_LIB = $(WIN_SDK)/Lib/10.0.18362.0
 
 CC   = "/mnt/c/$(MSVC)/bin/Hostx64/x64/cl.exe"
 LINK = "/mnt/c/$(MSVC)/bin/Hostx64/x64/link.exe"

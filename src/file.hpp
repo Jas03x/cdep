@@ -2,26 +2,26 @@
 #define FILE_HPP
 
 #include <cstdio>
+#include <cstdint>
 
-#include <vector>
-
-class File
+struct File
 {
-private:
-    std::FILE* m_file;
+    FILE* handle;
 
-public:
-    File(const char* path);
+    enum
+    {
+        READ  = 0,
+        WRITE = 1,
+        MAX = 2
+    };
+
+    File();
+    File(const char* path, uint32_t mode);
     ~File();
+
+    File& operator=(File& other);
     
     bool is_open();
-    bool is_eof();
-
-    char getc();
-    bool ungetc(char c);
-    
-    void skip_line();
-    void skip_space();
 };
 
 #endif // FILE_HPP

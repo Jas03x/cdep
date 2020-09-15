@@ -1,50 +1,41 @@
+
 #include "file.hpp"
 
-#include "ascii.hpp"
-
-File::File(const char* path)
+File::File()
 {
-    m_file = std::fopen(path, "r");
+    handle = nullptr;
+}
+
+File::File(const char* path, uint32_t mode)
+{
+    const char* modes[] = { "r", "w" };
+
+    if(mode < File::MAX)
+    {
+        handle = fopen(path, modes[mode]);
+    }
+    else
+    {
+        printf("error: invalid file mode\n");
+    }
 }
 
 File::~File()
 {
-    if(m_file != nullptr)
+    if(handle != nullptr)
     {
-        std::fclose(m_file);
-        m_file = nullptr;
+        fclose(handle);
     }
 }
 
-bool File::is_open()      { return m_file != nullptr;        }
-bool File::is_eof()       { return std::feof(m_file);             }
-char File::getc()         { return std::fgetc(m_file);            }
-bool File::ungetc(char c) { return std::ungetc(c, m_file) != EOF; }
-
-void File::skip_line()
+File& File::operator=(File& other)
 {
-    while(true)
-    {
-        char c = std::fgetc(m_file);
-        if((c == EOF) || (c == '\n'))
-        {
-            break;
-        }
-    }
+    this->handle = other.handle;
+    other.handle = nullptr;
+    return *this;
 }
 
-void File::skip_space()
+bool File::is_open()
 {
-    while(true)
-    {
-        char c = fgetc(m_file);
-        if(!is_space(c))
-        {
-            if(c != EOF)
-            {
-                std::ungetc(c, m_file);
-            }
-            break;
-        }
-    }
+    return (handle != nullptr);
 }
