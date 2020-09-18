@@ -35,7 +35,17 @@ File& File::operator=(File& other)
     return *this;
 }
 
+bool File::eof()
+{
+    return feof(handle) != 0;
+}
+
 bool File::is_open()
 {
     return (handle != nullptr);
+}
+
+int File::getc()
+{
+    return fgetc(handle);
 }

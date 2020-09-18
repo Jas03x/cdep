@@ -21,7 +21,10 @@ struct File
 
     File& operator=(File& other);
     
+    bool eof();
     bool is_open();
+
+    int getc();
 };
 
 #endif // FILE_HPP
